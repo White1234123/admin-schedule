@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>График админов</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#f4f5f7;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
+  --dark:#111827;--green:#16a34a;--greenbg:#ecfdf3;--red:#dc2626;--redbg:#fef2f2;
+  --amber:#d97706;--amberbg:#fffbeb;--blue:#2563eb;--bluebg:#eff6ff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+body{margin:0;background:var(--bg);color:var(--text);padding:10px}
+.app{width:min(720px,100%);margin:auto;padding-bottom:30px}
+button,input{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;min-height:44px;padding:9px 12px}
+button:active{transform:scale(.98)}
+.primary{background:var(--dark);color:#fff;border-color:var(--dark)}
+.ghost{background:#fff}
+.danger{color:var(--red);background:var(--redbg);border-color:#fecaca}
+.muted{color:var(--muted);font-size:13px;line-height:1.35}
+.header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:4px 2px 10px}
+h1{font-size:25px;line-height:1.1;margin:0 0 5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px;margin-top:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.section-title{font-weight:750;font-size:16px}
+.profile-bar{display:flex;gap:7px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.profile-bar::-webkit-scrollbar{display:none}
+.profile{white-space:nowrap;border-radius:999px;padding:8px 13px;min-height:40px}
+.profile.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.add-row{display:flex;gap:7px;margin-top:8px}
+input{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:16px;min-width:0}
+.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
+.stat{border-radius:14px;padding:10px;background:#f7f7f8}
+.stat b{display:block;font-size:21px;line-height:1.1}.stat span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.stat.good{background:var(--greenbg)}.stat.bad{background:var(--redbg)}.stat.warn{background:var(--amberbg)}
+.monthbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.monthbar button{width:44px;padding:0;font-size:24px}
+.month-name{text-align:center;font-size:17px;font-weight:750;text-transform:capitalize;flex:1}
+.today{font-size:12px;min-height:38px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:9px}
+.dow{text-align:center;color:#8a8f98;font-size:10px;padding:2px}
+.day{min-width:0;min-height:61px;padding:6px 5px;text-align:left;position:relative;border-radius:11px}
+.day.sel{outline:2px solid var(--dark);outline-offset:-2px}
+.day .num{font-weight:750;font-size:14px}
+.day .mini{margin-top:5px;font-size:9px;line-height:1.2;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day.covered{background:var(--greenbg)}
+.day.partial{background:var(--amberbg)}
+.day.empty{background:#fafafa}
+.day .badge{position:absolute;right:4px;bottom:4px;font-size:9px;font-weight:700}
+.day.covered .badge{color:var(--green)}.day.partial .badge{color:var(--amber)}.day.empty .badge{color:var(--red)}
+.day.other{opacity:.35;pointer-events:none}
+.date-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.date-title{font-size:20px;font-weight:800}
+.date-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.date-actions button{font-size:12px}
+.big-action{grid-column:1/-1;background:var(--dark);color:#fff;border-color:var(--dark);font-weight:750}
+.outline-action{grid-column:1/-1}
+.status{display:none;margin-top:9px;padding:9px 11px;border-radius:11px;background:#f3f4f6;font-size:12px}
+.status.show{display:block}
+.filter-row{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter{min-height:36px;padding:6px 11px;border-radius:999px;font-size:12px;white-space:nowrap}
+.filter.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.hours{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.hour{display:flex;align-items:flex-start;gap:9px;text-align:left;min-height:65px;padding:10px 9px;border-radius:14px}
+.hour.free{background:#fff;border-color:#d1d5db}
+.hour.mine{background:var(--greenbg);border-color:#86efac}
+.hour.taken{background:#f5f6f7;border-color:#e5e7eb}
+.hour.critical{box-shadow:inset 4px 0 0 var(--red)}
+.hour-dot{width:11px;height:11px;border-radius:50%;border:1px solid #9ca3af;flex:none;margin-top:4px}
+.hour.mine .hour-dot{background:var(--green);border-color:var(--green)}
+.hour.taken .hour-dot{background:#9ca3af;border-color:#9ca3af}
+.hour.critical .hour-dot{background:#fff;border-color:var(--red)}
+.hour-info{min-width:0}.hour-time{font-weight:750;font-size:13px}.hour-status{display:block;font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hour.mine .hour-status{color:#15803d;font-weight:700}.hour.free .hour-status{color:#dc2626;font-weight:700}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:11px}
+.unavailable-box{margin-top:10px;padding:11px;border-radius:14px;background:#fff7ed;border:1px solid #fed7aa}
+.unavailable-title{font-weight:750;font-size:14px}.unavailable-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.unavailable-actions button{font-size:12px}.unavailable-mode{display:flex;gap:6px;margin-top:8px}
+.mode-btn{flex:1;font-size:12px}.mode-btn.active{background:#9a3412;color:#fff;border-color:#9a3412}
+.hour.unavailable{background:#fff7ed;border-color:#fdba74;box-shadow:inset 4px 0 0 #f97316}
+.hour.unavailable .hour-dot{background:#f97316;border-color:#f97316}.hour.unavailable .hour-status{color:#9a3412;font-weight:700}
+.unavailable-day{outline:1px solid #f97316}
+.availability-panel{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.availability-title{font-weight:750;font-size:14px;margin-bottom:7px}
+.availability-row{display:flex;align-items:center;gap:7px;font-size:11px;padding:6px 8px;border-radius:9px;margin-top:4px;background:#f8fafc}
+.availability-row .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.availability-row.ok .dot{background:#16a34a}
+.availability-row.no .dot{background:#f97316}
+.availability-row.free .dot{background:#dc2626}
+.hour-detail{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f8fafc;font-size:11px}
+
+
+.legend span{display:flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:50%;background:#9ca3af}.legend .lg-free{background:#fff;border:1px solid var(--red)}.legend .lg-mine{background:var(--green)}
+.notice{margin-top:9px;padding:10px 11px;border-radius:12px;font-size:12px;background:var(--redbg);color:#991b1b;font-weight:650}
+.notice.good{background:var(--greenbg);color:#166534}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:flex-end;justify-content:center;padding:10px;z-index:20}
+.modal.show{display:flex}.sheet{width:min(720px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:14px}
+.sheethead{display:flex;justify-content:space-between;align-items:center}.sheet h2{font-size:18px;margin:0}
+.profile-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #eee}
+@media(max-width:430px){
+ body{padding:7px}.card{padding:11px;border-radius:16px}.summary{gap:5px}.stat{padding:9px 8px}.stat b{font-size:19px}
+ .hours{gap:5px}.hour{min-height:62px;padding:9px 7px}.hour-time{font-size:12px}.hour-status{font-size:9px}
+ .day{min-height:58px;padding:5px 4px}.day .mini{font-size:8px}.date-actions{gap:5px}
+}
+.server-state{position:sticky;top:0;z-index:20;margin:-2px 0 10px;padding:7px 10px;border-radius:9px;background:#fff7ed;color:#9a3412;font-size:11px;font-weight:700;text-align:center}.server-state.ok{background:#f0fdf4;color:#166534}.server-state.bad{background:#fef2f2;color:#b91c1c}</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div><h1>График админов</h1><div class="muted">Отмечай только часы, когда реально сможешь быть в чате.</div></div>
+    <button id="manage" type="button">⚙️</button>
+  </header>
+
+  <section class="card">
+    <div class="section-title">Кто ты?</div>
+    <div id="profiles" class="profile-bar"></div>
+    <div class="add-row">
+      <input id="newName" maxlength="30" placeholder="Имя админа">
+      <button id="add" class="primary">Добавить</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="monthbar">
+      <button id="prev">‹</button>
+      <div id="month" class="month-name"></div>
+      <button id="next">›</button>
+    </div>
+    <button id="today" class="today ghost" style="width:100%;margin-top:7px">Сегодня</button>
+    <div id="calendar" class="cal"></div>
+  </section>
+
+  <section class="card">
+    <div class="date-head">
+      <div><div id="date" class="date-title"></div><div id="mine" class="muted"></div></div>
+    </div>
+
+    <div id="summary" class="summary"></div>
+    <div id="notice" class="notice"></div>
+
+    <div id="availabilityPanel" class="availability-panel"></div>
+
+    <div class="unavailable-box">
+      <div class="unavailable-title">🚫 Когда я не могу</div>
+      <div id="unavailableSummary" class="muted" style="margin-top:4px">Здесь будут твои ограничения на выбранный день.</div>
+      <div class="unavailable-actions">
+        <button id="unavailableWholeDay">🚫 Не могу весь день</button>
+        <button id="clearUnavailable">✓ Снять недоступность</button>
+      </div>
+      <div class="unavailable-mode">
+        <button id="workMode" class="mode-btn active">🟢 Выбираю часы</button>
+        <button id="unavailableMode" class="mode-btn">🚫 Отмечаю недоступность</button>
+      </div>
+    </div>
+
+    <div class="date-actions">
+      <button id="fullDay" class="big-action">☀️ Выбрать весь день</button>
+      <button id="clearDay" class="outline-action">✕ Снять мой день</button>
+      <button id="copyDay">📋 Копировать день</button>
+      <button id="pasteDay">📥 Вставить день</button>
+      <button id="copyWeek">📅 Копировать неделю</button>
+      <button id="pasteWeek">📥 Вставить неделю</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="filter-row">
+      <button class="filter active" data-filter="all">Все 24 часа</button>
+      <button class="filter" data-filter="free">🔴 Только пустые</button>
+      <button class="filter" data-filter="mine">🟢 Мои</button>
+    </div>
+
+    <div id="hours" class="hours"></div>
+    <div id="hourDetail" class="hour-detail" style="display:none"></div>
+    <div class="legend">
+      <span><i class="lg-free"></i> свободно</span>
+      <span><i class="lg-mine"></i> ты</span>
+      <span><i></i> другой админ</span>
+    </div>
+  </section>
+</div>
+
+<div id="modal" class="modal">
+ <div class="sheet">
+  <div class="sheethead"><h2>Профили</h2><button id="close">✕</button></div>
+  <div class="muted" style="margin-top:6px">Удаление профиля удаляет его часы из общего графика.</div>
+  <div id="profileList"></div>
+  <div id="allUnavailable" style="margin-top:14px"></div>
+ </div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+let profiles=[],slots={},unavailable={},currentId=localStorage.getItem('admin_schedule_current_id')||'';
+let selected=new Date(),view=new Date(selected.getFullYear(),selected.getMonth(),1);
+let copiedDay=null,copiedWeek=null,filter='all',loading=false,mode='work';
+
+function dkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmt(d){return new Intl.DateTimeFormat('ru-RU',{weekday:'long',day:'numeric',month:'long'}).format(d)}
+function daySlots(d){return slots[dkey(d)]||{}}
+function booked(d,h){return daySlots(d)[String(h)]||null}
+function unavailableFor(d,pid){return unavailable[dkey(d)]?.[pid]||null}
+function isUnavailable(d,h,pid=currentId){const u=unavailableFor(d,pid);return !!(u&&(u.allDay||(u.hours||[]).includes(h)))}
+function unavailableHours(d,pid=currentId){const u=unavailableFor(d,pid);if(!u)return [];if(u.allDay)return Array.from({length:24},(_,i)=>i);return Array.isArray(u.hours)?u.hours:[]}
+function me(){return profiles.find(p=>p.id===currentId)||null}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function weekStart(d){const x=new Date(d),day=x.getDay();x.setDate(x.getDate()-(day===0?6:day-1));x.setHours(0,0,0,0);return x}
+function toast(t){const e=$('status');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2300)}
+function apiPost(body){const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),7000); return fetch('/.netlify/functions/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal}).finally(()=>clearTimeout(timer)).then(async r=>{let x={};try{x=await r.json()}catch{}if(!r.ok)throw Error(x.error||'Ошибка сервера');return x})}
+
+async function refresh(silent=true){
+ if(loading)return;loading=true;
+ const oldTitle=$('mine'); if(oldTitle && !profiles.length) oldTitle.textContent='Загрузка общего графика…';
+ try{
+  const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),5000); const r=await fetch('/.netlify/functions/schedule?ts='+Date.now(),{cache:'no-store',signal:controller.signal}); clearTimeout(timer);
+  if(!r.ok)throw Error('Сервер вернул ошибку');
+  const data=await r.json();
+  $('serverState').textContent='🟢 Общий график сохранён на сервере';
+  $('serverState').className='server-state ok';
+  profiles=Object.entries(data.profiles||{}).map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  slots=data.slots||{};
+  unavailable=data.unavailable||{};
+  if(!profiles.some(p=>p.id===currentId)){currentId=profiles[0]?.id||'';if(currentId)localStorage.setItem('admin_schedule_current_id',currentId)}
+  render();
+ }catch(e){$('serverState').textContent='🔴 Нет связи с сервером графика';
+  $('serverState').className='server-state bad';
+  if(!silent)toast('Не удалось подключиться к серверному графику. Проверь деплой Netlify Functions.')}
+ finally{loading=false}
+}
+
+function renderProfiles(){
+ const box=$('profiles');box.innerHTML='';
+ if(!profiles.length){box.innerHTML='<span class="muted">Добавь первого админа ниже.</span>';return}
+ profiles.forEach(p=>{
+  const b=document.createElement('button');b.className='profile'+(p.id===currentId?' active':'');b.textContent=p.name;
+  b.onclick=()=>{currentId=p.id;localStorage.setItem('admin_schedule_current_id',currentId);render()};
+  box.appendChild(b);
+ });
+}
+function renderManage(){
+ const box=$('profileList');box.innerHTML='';
+ profiles.forEach(p=>{
+  const row=document.createElement('div');row.className='profile-item';
+  row.innerHTML='<span>'+escapeHtml(p.name)+'</span>';
+  const b=document.createElement('button');b.className='danger';b.textContent='Удалить';
+  b.onclick=async()=>{if(!confirm('Удалить «'+p.name+'»?'))return;try{await apiPost({action:'deleteProfile',id:p.id});if(currentId===p.id)currentId='';await refresh(false);renderManage();toast('Профиль удалён.')}catch(e){toast(e.message)}};
+  row.appendChild(b);box.appendChild(row);
+ });
+ if(!profiles.length)box.innerHTML='<div class="muted" style="padding:12px 0">Профилей нет.</div>';
+ const all=$('allUnavailable'),rows=[];
+ for(const date of Object.keys(unavailable).sort()){
+   for(const [pid,u] of Object.entries(unavailable[date]||{})){
+     const p=profiles.find(x=>x.id===pid);if(!p)continue;
+     const text=u.allDay?'весь день':(u.hours||[]).map(h=>String(h).padStart(2,'0')+':00').join(', ');
+     rows.push('<div class="profile-item"><span><b>'+escapeHtml(p.name)+'</b><br><span class="muted">'+escapeHtml(date)+' · '+escapeHtml(text)+'</span></span></div>');
+   }
+ }
+ all.innerHTML='<div class="section-title">🚫 Все недоступности</div><div class="muted" style="margin-top:5px">'+(rows.length?'Кто и когда не может:':'Пока никто не указал недоступность.')+'</div>'+rows.slice(-30).reverse().join('');
+}
+function dayStats(d){
+ let free=0,mine=0,taken=0;
+ for(let h=0;h<24;h++){const x=booked(d,h);if(!x)free++;else if(x.profileId===currentId)mine++;else taken++}
+ return {free,mine,taken};
+}
+function renderCalendar(){
+ const box=$('calendar');box.innerHTML='';
+ ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(x=>{const e=document.createElement('div');e.className='dow';e.textContent=x;box.appendChild(e)});
+ const y=view.getFullYear(),m=view.getMonth(),first=new Date(y,m,1),off=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+ for(let i=0;i<off;i++)box.appendChild(document.createElement('div'));
+ for(let n=1;n<=days;n++){
+  const d=new Date(y,m,n),s=dayStats(d),b=document.createElement('button');b.className='day';
+  if(dkey(d)===dkey(selected))b.classList.add('sel');
+  if(s.free===0)b.classList.add('covered');else if(s.taken||s.mine)b.classList.add('partial');else b.classList.add('empty');
+  if(currentId&&unavailableFor(d,currentId))b.classList.add('unavailable-day');
+  let mini=s.free===0?'Закрыт':s.free===24?'Пустой':(s.taken+s.mine)+' занято';
+  b.innerHTML='<div class="num">'+n+'</div><div class="mini">'+mini+'</div><div class="badge">'+s.free+' пуст.</div>';
+  b.onclick=()=>{selected=d;view=new Date(d.getFullYear(),d.getMonth(),1);render()};
+  box.appendChild(b);
+ }
+ $('month').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric'}).format(view);
+}
+function renderSummary(){
+ const s=dayStats(selected);
+ $('summary').innerHTML='<div class="stat '+(s.free?'bad':'good')+'"><b>'+s.free+'</b><span>пустых часов</span></div><div class="stat"><b>'+s.taken+'</b><span>других админов</span></div><div class="stat good"><b>'+s.mine+'</b><span>моих часов</span></div>';
+ const n=$('notice');
+ if(s.free)n.textContent='⚠️ В этот день ещё '+s.free+' пустых '+(s.free===1?'час':'часа')+'.';
+ else {n.textContent='✓ Все 24 часа закрыты';n.className='notice good'}
+}
+
+function renderAvailabilityPanel(){
+ const box=$('availabilityPanel');
+ if(!profiles.length){box.innerHTML='';return}
+ const rows=[];
+ for(const p of profiles){
+   const u=unavailableFor(selected,p.id);
+   if(u){
+     const text=u.allDay?'весь день':unavailableHours(selected,p.id).map(h=>String(h).padStart(2,'0')+':00').join(', ');
+     rows.push('<div class="availability-row no"><span class="dot"></span><span><b>'+escapeHtml(p.name)+'</b> — 🚫 не может '+escapeHtml(text)+'</span></div>');
+   }
+ }
+ box.innerHTML='<div class="availability-title">🚫 Недоступны в этот день</div>'+
+   (rows.length?rows.join(''):'<div class="muted">Никто не отметил недоступность.</div>');
+}
+function showHourDetail(h){
+ const box=$('hourDetail');
+ if(h===null||h===undefined){box.style.display='none';return}
+ const rows=[];
+ for(const p of profiles){
+   const u=isUnavailable(selected,h,p.id);
+   const x=booked(selected,h);
+   if(u) rows.push('<div class="availability-row no"><span class="dot"></span><span><b>'+escapeHtml(p.name)+'</b> — 🚫 не может</span></div>');
+   else if(x?.profileId===p.id) rows.push('<div class="availability-row ok"><span class="dot"></span><span><b>'+escapeHtml(p.name)+'</b> — 🟢 выбрал этот час</span></div>');
+   else rows.push('<div class="availability-row free"><span class="dot"></span><span><b>'+escapeHtml(p.name)+'</b> — доступен</span></div>');
+ }
+ box.style.display='block';
+ box.innerHTML='<b>'+String(h).padStart(2,'0')+':00 — '+String((h+1)%24).padStart(2,'0')+':00</b>'+rows.join('');
+}
+function renderUnavailableSummary(){
+ const m=me(),box=$('unavailableSummary');if(!m){box.textContent='Выбери профиль, чтобы отметить недоступность.';return}
+ const u=unavailableFor(selected,m.id), others=[];
+ for(const p of profiles){if(p.id===m.id)continue;const x=unavailableFor(selected,p.id);if(x)others.push(p.name+': '+(x.allDay?'весь день':unavailableHours(selected,p.id).map(h=>String(h).padStart(2,'0')+':00').join(', ')))}
+ if(u)box.innerHTML=(u.allDay?'Ты не можешь работать весь день.':'Ты не можешь: '+unavailableHours(selected,m.id).map(h=>String(h).padStart(2,'0')+':00').join(', '))+(others.length?'<br><span class="muted">Другие: '+escapeHtml(others.join(' · '))+'</span>':'');
+ else box.innerHTML='Ты доступен весь выбранный день.'+(others.length?'<br><span class="muted">Не могут: '+escapeHtml(others.join(' · '))+'</span>':'');
+}
+function renderHours(){
+ const box=$('hours');box.innerHTML='';const m=me();
+ $('date').textContent=fmt(selected);
+ if(!m){$('mine').textContent='Выбери профиль выше.';return}
+ const s=dayStats(selected);$('mine').textContent=s.mine?'Ты уже занял '+s.mine+' ч.':'Ты ещё не выбрал часы';
+ for(let h=0;h<24;h++){
+  const x=booked(selected,h),mine=x?.profileId===m.id,unavail=isUnavailable(selected,h,m.id);
+  if(filter==='free'&&x)continue;if(filter==='mine'&&(!mine&&!unavail))continue;
+  const b=document.createElement('button');b.className='hour '+(unavail?'unavailable':mine?'mine':x?'taken':'free')+(x||unavail?'':' critical');
+  const end=(h+1)%24;
+  const status=unavail?'🚫 Ты не можешь в это время':x?(mine?'✓ Ты выбрал':x.name):'🔴 СВОБОДНО — нажми, чтобы занять';
+  b.innerHTML='<span class="hour-dot"></span><span class="hour-info"><span class="hour-time">'+String(h).padStart(2,'0')+':00 — '+String(end).padStart(2,'0')+':00</span><span class="hour-status">'+escapeHtml(status)+'</span></span>';
+  b.onclick=()=>{showHourDetail(h);mode==='unavailable'?toggleUnavailable(h):toggleHour(h)};box.appendChild(b);
+ }
+ if(!box.children.length)box.innerHTML='<div class="muted" style="grid-column:1/-1;padding:10px">Ничего не найдено.</div>';
+}
+function render(){renderProfiles();renderCalendar();renderSummary();renderAvailabilityPanel();renderUnavailableSummary();renderHours()}
+async function toggleHour(h){
+ const m=me();if(!m){toast('Сначала выбери профиль');return}
+ const x=booked(selected,h);
+ if(isUnavailable(selected,h,m.id)){toast('Ты отметил это время как недоступное.');return}
+ if(x&&x.profileId!==m.id){toast('Час уже выбрал: '+x.name);return}
+ try{await apiPost({action:'setSlot',date:dkey(selected),hour:h,profileId:m.id,reserve:!x});await refresh(true)}
+ catch(e){toast(e.message);await refresh(true)}
+}
+async function toggleUnavailable(h){
+ const m=me();if(!m){toast('Сначала выбери профиль');return}
+ const currently=isUnavailable(selected,h,m.id),x=booked(selected,h);
+ if(!currently&&x?.profileId===m.id){toast('Сначала сними свой час, затем отметь недоступность.');return}
+ try{await apiPost({action:'setUnavailable',date:dkey(selected),hour:h,profileId:m.id,reserve:!currently});await refresh(true)}catch(e){toast(e.message)}
+}
+async function setWholeUnavailable(reserve){
+ const m=me();if(!m){toast('Сначала выбери профиль');return}
+ try{await apiPost({action:'setUnavailableDay',date:dkey(selected),profileId:m.id,reserve});await refresh(true);toast(reserve?'Весь день отмечен как недоступный.':'Недоступность на день снята.')}catch(e){toast(e.message)}
+}
+async function setWholeDay(reserve){
+ const m=me();if(!m){toast('Сначала выбери профиль');return}
+ const ops=[];
+ for(let h=0;h<24;h++){const x=booked(selected,h);if(reserve&&!x&&!isUnavailable(selected,h,m.id))ops.push({date:dkey(selected),hour:h,reserve:true});if(!reserve&&x?.profileId===m.id)ops.push({date:dkey(selected),hour:h,reserve:false})}
+ if(!ops.length){toast(reserve?'Все свободные часы уже недоступны или заняты.':'У тебя нет часов для снятия.');return}
+ try{const r=await apiPost({action:'syncSlots',profileId:m.id,operations:ops});await refresh(true);toast(r.conflicts?.length?'День отмечен, занятые часы пропущены.':(reserve?'Весь свободный день отмечен.':'Твои часы за день сняты.'))}catch(e){toast(e.message)}
+}
+$('fullDay').onclick=()=>setWholeDay(true);
+$('unavailableWholeDay').onclick=()=>setWholeUnavailable(true);
+$('clearUnavailable').onclick=()=>setWholeUnavailable(false);
+$('workMode').onclick=()=>{mode='work';$('workMode').classList.add('active');$('unavailableMode').classList.remove('active');renderHours()};
+$('unavailableMode').onclick=()=>{mode='unavailable';$('unavailableMode').classList.add('active');$('workMode').classList.remove('active');renderHours()};
+$('clearDay').onclick=()=>setWholeDay(false);
+$('add').onclick=async()=>{const name=$('newName').value.trim();if(!name){toast('Введи имя');return}const id=crypto.randomUUID();try{const r=await apiPost({action:'addProfile',id,name});currentId=r.id||id;localStorage.setItem('admin_schedule_current_id',currentId);$('newName').value='';await refresh(false);toast('Профиль добавлен для всех')}catch(e){toast(e.message)}};
+$('newName').onkeydown=e=>{if(e.key==='Enter')$('add').click()};
+$('manage').onclick=()=>{$('modal').classList.add('show');renderManage()};
+$('close').onclick=()=>$('modal').classList.remove('show');
+$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('show')};
+$('prev').onclick=()=>{view.setMonth(view.getMonth()-1);renderCalendar()};
+$('next').onclick=()=>{view.setMonth(view.getMonth()+1);renderCalendar()};
+$('today').onclick=()=>{selected=new Date();view=new Date(selected.getFullYear(),selected.getMonth(),1);render()};
+document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderHours()});
+
+$('copyDay').onclick=()=>{const m=me();if(!m)return toast('Сначала выбери профиль');copiedDay=[];for(let h=0;h<24;h++)if(booked(selected,h)?.profileId===m.id)copiedDay.push(h);toast('День скопирован')};
+$('pasteDay').onclick=async()=>{const m=me();if(!m)return toast('Сначала выбери профиль');if(!copiedDay)return toast('Сначала скопируй день');const set=new Set(copiedDay),ops=[];for(let h=0;h<24;h++){const x=booked(selected,h);if(x?.profileId===m.id&&!set.has(h))ops.push({date:dkey(selected),hour:h,reserve:false});if(!x&&set.has(h))ops.push({date:dkey(selected),hour:h,reserve:true})}try{const r=await apiPost({action:'syncSlots',profileId:m.id,operations:ops});await refresh(true);toast(r.conflicts?.length?'Вставлено, занятые часы пропущены':'День вставлен')}catch(e){toast(e.message)}};
+$('copyWeek').onclick=()=>{const m=me();if(!m)return toast('Сначала выбери профиль');const s=weekStart(selected);copiedWeek=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);const a=[];for(let h=0;h<24;h++)if(booked(d,h)?.profileId===m.id)a.push(h);copiedWeek.push(a)}toast('Неделя скопирована')};
+$('pasteWeek').onclick=async()=>{const m=me();if(!m)return toast('Сначала выбери профиль');if(!copiedWeek)return toast('Сначала скопируй неделю');const s=weekStart(selected),ops=[];for(let i=0;i<7;i++){const d=new Date(s);d.setDate(s.getDate()+i);const set=new Set(copiedWeek[i]);for(let h=0;h<24;h++){const x=booked(d,h);if(x?.profileId===m.id&&!set.has(h))ops.push({date:dkey(d),hour:h,reserve:false});if(!x&&set.has(h))ops.push({date:dkey(d),hour:h,reserve:true})}}try{const r=await apiPost({action:'syncSlots',profileId:m.id,operations:ops});await refresh(true);toast(r.conflicts?.length?'Вставлено, занятые часы пропущены':'Неделя вставлена')}catch(e){toast(e.message)}};
+
+render(); refresh(false); setInterval(()=>refresh(true),2500);
+})();
+</script>
+</body>
+</html>
